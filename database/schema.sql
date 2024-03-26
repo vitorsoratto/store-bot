@@ -14,4 +14,5 @@ CREATE TABLE IF NOT EXISTS `item` (
   `description` varchar(255),
   `price` float NOT NULL,
   `stock` int(20) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
