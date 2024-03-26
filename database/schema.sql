@@ -6,3 +6,12 @@ CREATE TABLE IF NOT EXISTS `warns` (
   `reason` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- table item
+CREATE TABLE IF NOT EXISTS `item` (
+  `id` int(11) NOT NULL,
+  `name` varchar(80) NOT NULL,
+  `description` varchar(255),
+  `price` float NOT NULL,
+  `stock` int(20) NOT NULL,
+)
