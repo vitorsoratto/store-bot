@@ -95,3 +95,132 @@ class DatabaseManager:
             for row in result:
                 result_list.append(row)
             return result_list
+
+
+    # [[ Store ]]
+    async def add_item(
+        self, name: str, desc: str, price: float, stock: int = 0
+    ) -> bool:
+        """
+        This function will add a item to the database.
+
+        :param name: The name of the item.
+        :param desc: The description of the item.
+        :param price: The price of the item.
+        :param stock: The stock of the item (default 0).
+        """
+        await self.connection.execute(
+            "INSERT INTO item(name, description, price, stock) VALUES (?, ?, ?, ?)",
+            (
+                name,
+                desc,
+                price,
+                stock,
+            ),
+        )
+        await self.connection.commit()
+        return True
+
+    async def update_item_stock(
+            self, item_id: int, stock: int
+        ) -> int:
+        """
+        This function will update the stock of a item.
+
+        :param item_id: The ID of the item.
+        :param stock: The new stock of the item.
+        """
+        await self.connection.execute(
+            "UPDATE item SET stock=? WHERE id=?",
+            (
+                stock,
+                item_id,
+            ),
+        )
+        await self.connection.commit()
+        rows = await self.connection.execute(
+            "SELECT stock FROM item WHERE id=?",
+            (
+                item_id,
+            ),
+        )
+        async with rows as cursor:
+            result = await cursor.fetchone()
+            return result[0] if result is not None else 0
+
+    async def get_item(self, item_id: int):
+        """
+        This function will get the item from the database.
+
+        :param item_id: The ID of the item.
+        :return: The item.
+        """
+        rows = await self.connection.execute(
+            "SELECT id, name, description, price, stock FROM item WHERE id=?",
+            (
+                item_id,
+            ),
+        )
+        async with rows as cursor:
+            result = await cursor.fetchone()
+            return result
+
+    async def get_items(self) -> list:
+        """
+        This function will get all the items from the database.
+
+        :return: A list of all the items.
+        """
+        rows = await self.connection.execute(
+            "SELECT id, name, description, price, stock FROM item",
+        )
+        async with rows as cursor:
+            result = await cursor.fetchall()
+
+            result_list = []
+            for row in result:
+                result_list.append(row)
+            return result_list
+
+    async def remove_item(self, item_id: int) -> int:
+        """
+        This function will remove a item from the database.
+
+        :param item_id: The ID of the item.
+        """
+        await self.connection.execute(
+            "DELETE FROM item WHERE id=?",
+            (
+                item_id,
+            ),
+        )
+        await self.connection.commit()
+        rows = await self.connection.execute(
+            "SELECT COUNT(*) FROM item WHERE id=?",
+            (
+                item_id,
+            ),
+        )
+        async with rows as cursor:
+            result = await cursor.fetchone()
+            return result[0] if result is not None else 0
+
+    async def search_item(self, name: str) -> list:
+        """
+        This function will search for a item in the database.
+
+        :param name: The name of the item.
+        :return: The item.
+        """
+        rows = await self.connection.execute(
+            "SELECT id, name, description, price, stock FROM item WHERE name=?",
+            (
+                name,
+            ),
+        )
+        async with rows as cursor:
+            result = await cursor.fetchall()
+            result_list = []
+            for row in result:
+                result_list.append(row)
+            return result_list

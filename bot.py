@@ -1,16 +1,9 @@
-"""
-Copyright © Krypton 2019-2023 - https://github.com/kkrypt0nn (https://krypton.ninja)
-Description:
-🐍 A simple template to start to code your own and personalized discord bot in Python programming language.
-
-Version: 6.1.0
-"""
-
 import json
 import logging
 import os
 import platform
 import random
+import sqlite3
 import sys
 
 import aiosqlite
@@ -27,51 +20,11 @@ else:
     with open(f"{os.path.realpath(os.path.dirname(__file__))}/config.json") as file:
         config = json.load(file)
 
-"""	
-Setup bot intents (events restrictions)
-For more information about intents, please go to the following websites:
-https://discordpy.readthedocs.io/en/latest/intents.html
-https://discordpy.readthedocs.io/en/latest/intents.html#privileged-intents
-
-
-Default Intents:
-intents.bans = True
-intents.dm_messages = True
-intents.dm_reactions = True
-intents.dm_typing = True
-intents.emojis = True
-intents.emojis_and_stickers = True
-intents.guild_messages = True
-intents.guild_reactions = True
-intents.guild_scheduled_events = True
-intents.guild_typing = True
-intents.guilds = True
-intents.integrations = True
-intents.invites = True
-intents.messages = True # `message_content` is required to get the content of the messages
-intents.reactions = True
-intents.typing = True
-intents.voice_states = True
-intents.webhooks = True
-
-Privileged Intents (Needs to be enabled on developer portal of Discord), please use them only if you need them:
-intents.members = True
-intents.message_content = True
-intents.presences = True
-"""
-
 intents = discord.Intents.default()
-
-"""
-Uncomment this if you want to use prefix (normal) commands.
-It is recommended to use slash commands and therefore not use prefix commands.
-
-If you want to use prefix commands, make sure to also enable the intent below in the Discord developer portal.
-"""
 intents.message_content = True
+
 
 # Setup both of the loggers
-
 
 class LoggingFormatter(logging.Formatter):
     # Colors
@@ -122,6 +75,11 @@ logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 
 
+def dict_factory(cursor, row):
+    fields = [column[0] for column in cursor.description]
+    return {key: value for key, value in zip(fields, row)}
+
+
 class DiscordBot(commands.Bot):
     def __init__(self) -> None:
         super().__init__(
@@ -143,10 +101,10 @@ class DiscordBot(commands.Bot):
 
     async def init_db(self) -> None:
         async with aiosqlite.connect(
-            f"{os.path.realpath(os.path.dirname(__file__))}/database/database.db"
+                f"{os.path.realpath(os.path.dirname(__file__))}/database/database.db"
         ) as db:
             with open(
-                f"{os.path.realpath(os.path.dirname(__file__))}/database/schema.sql"
+                    f"{os.path.realpath(os.path.dirname(__file__))}/database/schema.sql"
             ) as file:
                 await db.executescript(file.read())
             await db.commit()
@@ -172,7 +130,7 @@ class DiscordBot(commands.Bot):
         """
         Setup the game status task of the bot.
         """
-        statuses = ["with you!", "with Krypton!", "with humans!"]
+        statuses = ["with you!", "with humans!"]
         await self.change_presence(activity=discord.Game(random.choice(statuses)))
 
     @status_task.before_loop
@@ -196,10 +154,12 @@ class DiscordBot(commands.Bot):
         await self.init_db()
         await self.load_cogs()
         self.status_task.start()
-        self.database = DatabaseManager(
-            connection=await aiosqlite.connect(
+        connection = await aiosqlite.connect(
                 f"{os.path.realpath(os.path.dirname(__file__))}/database/database.db"
             )
+        connection.row_factory = dict_factory
+        self.database = DatabaseManager(
+            connection=connection
         )
 
     async def on_message(self, message: discord.Message) -> None:
@@ -262,16 +222,16 @@ class DiscordBot(commands.Bot):
         elif isinstance(error, commands.MissingPermissions):
             embed = discord.Embed(
                 description="You are missing the permission(s) `"
-                + ", ".join(error.missing_permissions)
-                + "` to execute this command!",
+                            + ", ".join(error.missing_permissions)
+                            + "` to execute this command!",
                 color=0xE02B2B,
             )
             await context.send(embed=embed)
         elif isinstance(error, commands.BotMissingPermissions):
             embed = discord.Embed(
                 description="I am missing the permission(s) `"
-                + ", ".join(error.missing_permissions)
-                + "` to fully perform this command!",
+                            + ", ".join(error.missing_permissions)
+                            + "` to fully perform this command!",
                 color=0xE02B2B,
             )
             await context.send(embed=embed)

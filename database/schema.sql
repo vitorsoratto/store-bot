@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS `warns` (
 
 -- table item
 CREATE TABLE IF NOT EXISTS `item` (
-  `id` int(11) NOT NULL,
+  `id` INTEGER PRIMARY KEY,
   `name` varchar(80) NOT NULL,
   `description` varchar(255),
   `price` float NOT NULL,
